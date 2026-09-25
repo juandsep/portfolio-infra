@@ -98,6 +98,27 @@ resource "google_project_iam_member" "guard" {
   member   = google_service_account.guard.member
 }
 
+# Newer projects give the default compute account no roles, so the function
+# builds with its own account.
+resource "google_service_account" "builder" {
+  project      = var.project_id
+  account_id   = "billing-guard-builder"
+  display_name = "Builds the billing-guard function"
+}
+
+resource "google_project_iam_member" "builder" {
+  for_each = toset(["roles/logging.logWriter", "roles/artifactregistry.writer"])
+  project  = var.project_id
+  role     = each.value
+  member   = google_service_account.builder.member
+}
+
+resource "google_storage_bucket_iam_member" "builder_reads_source" {
+  bucket = var.source_bucket
+  role   = "roles/storage.objectViewer"
+  member = google_service_account.builder.member
+}
+
 data "archive_file" "source" {
   type        = "zip"
   source_dir  = "${path.module}/function"
@@ -116,8 +137,9 @@ resource "google_cloudfunctions2_function" "guard" {
   location = var.region
 
   build_config {
-    runtime     = "python312"
-    entry_point = "stop_billing"
+    runtime         = "python312"
+    entry_point     = "stop_billing"
+    service_account = google_service_account.builder.id
     source {
       storage_source {
         bucket = var.source_bucket
@@ -143,5 +165,9 @@ resource "google_cloudfunctions2_function" "guard" {
     service_account_email = google_service_account.guard.email
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.apis,
+    google_project_iam_member.builder,
+    google_storage_bucket_iam_member.builder_reads_source,
+  ]
 }
