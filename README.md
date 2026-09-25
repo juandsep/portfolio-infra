@@ -23,19 +23,22 @@ terraform init
 terraform apply
 ```
 
-Store the Neon connection string (the value never goes through Terraform):
+Store the Neon connection string (the value never goes through Terraform).
+Use the direct connection, not the pooled one: MLflow runs migrations on
+start. `read -s` keeps it out of the screen and the shell history:
 
 ```bash
-printf '%s' "postgresql://USER:PASSWORD@HOST/DB?sslmode=require" \
-  | gcloud secrets versions add mlflow-db-uri --data-file=- --project jd-portfolio-shared
+read -rs NEON_URL   # paste the connection string, then Enter
+printf '%s' "$NEON_URL" | gcloud secrets versions add mlflow-db-uri --data-file=- --project jd-portfolio-shared
+unset NEON_URL
 ```
 
 Build the MLflow image, then deploy it:
 
 ```bash
 REPO=$(terraform output -raw image_repository)
-gcloud builds submit ../mlflow --tag "$REPO/mlflow:3.16.1" --project jd-portfolio-shared
-terraform apply -var "mlflow_image=$REPO/mlflow:3.16.1"
+gcloud builds submit ../mlflow --tag "$REPO/mlflow:3.16.1-2" --project jd-portfolio-shared
+terraform apply -var "mlflow_image=$REPO/mlflow:3.16.1-2"
 ```
 
 Put `mlflow_image` in `terraform.tfvars` so later applies keep it.
