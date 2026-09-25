@@ -106,17 +106,17 @@ resource "google_service_account" "builder" {
   display_name = "Builds the billing-guard function"
 }
 
+# objectViewer is project-wide: the build reads the source from a bucket
+# Cloud Functions creates itself (gcf-v2-sources-*), not only source_bucket.
 resource "google_project_iam_member" "builder" {
-  for_each = toset(["roles/logging.logWriter", "roles/artifactregistry.writer"])
-  project  = var.project_id
-  role     = each.value
-  member   = google_service_account.builder.member
-}
-
-resource "google_storage_bucket_iam_member" "builder_reads_source" {
-  bucket = var.source_bucket
-  role   = "roles/storage.objectViewer"
-  member = google_service_account.builder.member
+  for_each = toset([
+    "roles/artifactregistry.writer",
+    "roles/logging.logWriter",
+    "roles/storage.objectViewer",
+  ])
+  project = var.project_id
+  role    = each.value
+  member  = google_service_account.builder.member
 }
 
 data "archive_file" "source" {
@@ -168,6 +168,5 @@ resource "google_cloudfunctions2_function" "guard" {
   depends_on = [
     google_project_service.apis,
     google_project_iam_member.builder,
-    google_storage_bucket_iam_member.builder_reads_source,
   ]
 }
