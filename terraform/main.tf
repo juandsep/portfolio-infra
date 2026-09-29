@@ -186,8 +186,9 @@ resource "google_cloud_run_v2_service" "mlflow" {
       }
       env {
         name = "ALLOWED_HOSTS"
-        # localhost is what `gcloud run services proxy` sends.
-        value = "${local.mlflow_host},localhost,localhost:8080"
+        # `gcloud run services proxy` sends the legacy *.a.run.app host, whose
+        # hash is only known after creation. IAM still guards every request.
+        value = "${local.mlflow_host},mlflow-*.a.run.app"
       }
       env {
         name = "BACKEND_STORE_URI"
