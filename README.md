@@ -11,8 +11,8 @@ own GCP project and repository; what they share lives here, in the
 
 The MLflow database is a Neon Postgres (free tier), outside GCP.
 
-Outside the cloud, `grafana/` runs one local Grafana for every project
-(see [Grafana](#grafana)).
+Outside the cloud, `grafana/` runs one local Grafana that shows every project
+together (see [Grafana](#grafana)).
 
 ## Setup
 
@@ -68,7 +68,10 @@ To give a product access, add its service accounts to `mlflow_clients`
 ## Grafana
 
 One local Grafana shows every project's dashboards, each in its own folder.
-It only reads: metrics and alerts stay in each project's cloud and keep working
+It **complements** each project's own Grafana, it does not replace it: every
+repository keeps a standalone `monitoring/` that runs on its own, so the project
+is complete for anyone who clones only that one. This is the day-to-day view
+across all of them. It only reads: metrics and alerts stay in each project's cloud and keep working
 while it is stopped, and it costs nothing. The dashboards stay in their own
 repositories (`monitoring/grafana/dashboards/`) and are mounted read-only from
 the sibling checkouts, so editing one there is enough.
@@ -86,12 +89,12 @@ The repositories must sit next to this one (`../botjonh`,
 ```bash
 aws sso login --profile <profile>        # if the profile uses SSO
 AWS_PROFILE=<profile> docker compose -f grafana/docker-compose.yml up -d
-open http://localhost:3000
+open http://localhost:3030
 docker compose -f grafana/docker-compose.yml down
 ```
 
-Grafana takes port 3000, so start uplift's lab without its own Grafana:
-`docker compose -f monitoring/docker-compose.yml up -d api pushgateway prometheus`.
+It listens on port 3030, so it runs alongside any project's own Grafana on
+3000, uplift's monitoring lab included.
 
 To add a project: mount its dashboards folder in `grafana/docker-compose.yml`,
 add a provider in `grafana/provisioning/dashboards/dashboards.yml`, and a
