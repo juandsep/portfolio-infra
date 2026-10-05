@@ -3,7 +3,7 @@
 # working when this is stopped. Dashboards stay in their own repositories and
 # are mounted read-only from the sibling checkouts under PORTFOLIO_DIR.
 # Start: AWS_PROFILE=<profile> docker compose -f grafana/docker-compose.yml up -d,
-# then open http://localhost:3000.
+# then open http://localhost:3030.
 
 services:
   grafana:
@@ -31,4 +31,6 @@ services:
       # uplift's Prometheus runs in its own compose project, published on the host.
       - host.docker.internal:host-gateway
     ports:
-      - "127.0.0.1:3000:3000"
+      # 3030, not 3000: each project's own Grafana takes 3000, and both can run
+      # at the same time.
+      - "127.0.0.1:3030:3000"
