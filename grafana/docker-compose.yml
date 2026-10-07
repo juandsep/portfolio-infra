@@ -2,7 +2,7 @@
 # alerts live in each project's cloud (CloudWatch, Cloud Monitoring) and keep
 # working when this is stopped. Dashboards stay in their own repositories and
 # are mounted read-only from the sibling checkouts under PORTFOLIO_DIR.
-# Start: AWS_PROFILE=<profile> docker compose -f grafana/docker-compose.yml up -d,
+# Start: eval "$(aws configure export-credentials --profile <p> --format env)"; docker compose -f grafana/docker-compose.yml up -d,
 # then open http://localhost:3030.
 
 services:
@@ -13,9 +13,14 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
       GF_AUTH_DISABLE_LOGIN_FORM: "true"
-      # CloudWatch uses the AWS SDK default chain: this profile, read from the
-      # mounted ~/.aws (SSO token cache included). No key is copied here.
-      AWS_PROFILE: ${AWS_PROFILE:-default}
+      # CloudWatch uses the AWS SDK default chain. Grafana's SDK cannot read an
+      # `sso-session` profile, so pass the session's temporary credentials:
+      #   eval "$(aws configure export-credentials --profile <profile> --format env)"
+      # A classic profile in the mounted ~/.aws works too (AWS_PROFILE).
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      AWS_PROFILE: ${AWS_PROFILE:-}
       AWS_SDK_LOAD_CONFIG: "1"
       HOME: /etc/aws-home
       BOTJONH_GCP_PROJECT: ${BOTJONH_GCP_PROJECT:-jd-botjonh}
