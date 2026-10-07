@@ -1,0 +1,18 @@
+# One folder per project; each JSON is owned and edited in its own repository.
+apiVersion: 1
+providers:
+  - name: botjonh
+    folder: botjonh
+    type: file
+    options:
+      path: /dashboards/botjonh
+  - name: uplift
+    folder: uplift-modeling-pipeline
+    type: file
+    options:
+      path: /dashboards/uplift
+  - name: document-rag
+    folder: document-rag-assistant
+    type: file
+    options:
+      path: /dashboards/document-rag

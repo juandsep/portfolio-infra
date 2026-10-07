@@ -1,0 +1,30 @@
+# The uids are the ones each project's dashboards already reference, so the
+# dashboard JSON works here unchanged.
+apiVersion: 1
+datasources:
+  # document-rag-assistant: Lambda metrics and AWS billing.
+  - name: CloudWatch
+    uid: cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: default
+      defaultRegion: us-east-1
+
+  # botjonh (telegram-personal-assistant): Cloud Run and log-based metrics.
+  - name: Google Cloud Monitoring (botjonh)
+    uid: cloud-monitoring
+    type: stackdriver
+    access: proxy
+    jsonData:
+      authenticationType: jwt
+      tokenUri: https://oauth2.googleapis.com/token
+      clientEmail: assistant-grafana@${BOTJONH_GCP_PROJECT}.iam.gserviceaccount.com
+      defaultProject: ${BOTJONH_GCP_PROJECT}
+      privateKeyPath: /etc/secrets/botjonh/grafana.pem
+
+  # uplift-modeling-pipeline: the local monitoring lab's Prometheus, only up
+  # while that lab runs.
+  - name: Prometheus (uplift lab)
+    uid: prometheus
+    type: prometheus
+    url: http://host.docker.internal:9090

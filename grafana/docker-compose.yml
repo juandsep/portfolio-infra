@@ -1,0 +1,36 @@
+# One local Grafana for every portfolio project. It only reads: metrics and
+# alerts live in each project's cloud (CloudWatch, Cloud Monitoring) and keep
+# working when this is stopped. Dashboards stay in their own repositories and
+# are mounted read-only from the sibling checkouts under PORTFOLIO_DIR.
+# Start: AWS_PROFILE=<profile> docker compose -f grafana/docker-compose.yml up -d,
+# then open http://localhost:3030.
+
+services:
+  grafana:
+    image: grafana/grafana:12.2.0
+    environment:
+      # Local only: open without a login.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      # CloudWatch uses the AWS SDK default chain: this profile, read from the
+      # mounted ~/.aws (SSO token cache included). No key is copied here.
+      AWS_PROFILE: ${AWS_PROFILE:-default}
+      AWS_SDK_LOAD_CONFIG: "1"
+      HOME: /etc/aws-home
+      BOTJONH_GCP_PROJECT: ${BOTJONH_GCP_PROJECT:-jd-botjonh}
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ${HOME}/.aws:/etc/aws-home/.aws:ro
+      # Read-only Cloud Monitoring key, created by botjonh's monitoring/grafana-key.sh.
+      - ${PORTFOLIO_DIR:-../..}/botjonh/monitoring/secrets:/etc/secrets/botjonh:ro
+      - ${PORTFOLIO_DIR:-../..}/botjonh/monitoring/grafana/dashboards:/dashboards/botjonh:ro
+      - ${PORTFOLIO_DIR:-../..}/uplift-modeling-pipeline/monitoring/grafana/dashboards:/dashboards/uplift:ro
+      - ${PORTFOLIO_DIR:-../..}/document-rag-assistant/monitoring/grafana/dashboards:/dashboards/document-rag:ro
+    extra_hosts:
+      # uplift's Prometheus runs in its own compose project, published on the host.
+      - host.docker.internal:host-gateway
+    ports:
+      # 3030, not 3000: each project's own Grafana takes 3000, and both can run
+      # at the same time.
+      - "127.0.0.1:3030:3000"
