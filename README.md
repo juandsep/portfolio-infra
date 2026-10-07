@@ -78,7 +78,7 @@ the sibling checkouts, so editing one there is enough.
 
 | Folder | Datasource | Credentials |
 |---|---|---|
-| `document-rag-assistant` | CloudWatch (`us-east-1`) | your AWS profile, from `~/.aws` mounted read-only |
+| `document-rag-assistant` | CloudWatch (`us-east-1`) | the SSO session's temporary credentials (Grafana's SDK cannot read `sso-session` profiles) |
 | `botjonh` | Google Cloud Monitoring (`jd-botjonh`) | read-only key from botjonh's `monitoring/grafana-key.sh` |
 | `uplift-modeling-pipeline` | Prometheus on `localhost:9090` | none; only up while uplift's monitoring lab runs |
 
@@ -87,8 +87,9 @@ The repositories must sit next to this one (`../botjonh`,
 `PORTFOLIO_DIR` if they live elsewhere.
 
 ```bash
-aws sso login --profile <profile>        # if the profile uses SSO
-AWS_PROFILE=<profile> docker compose -f grafana/docker-compose.yml up -d
+aws sso login --profile <profile>
+eval "$(aws configure export-credentials --profile <profile> --format env)"
+docker compose -f grafana/docker-compose.yml up -d
 open http://localhost:3030
 docker compose -f grafana/docker-compose.yml down
 ```
