@@ -1,10 +1,15 @@
 # Shared project: the MLflow tracking server every product uses, its artifact
 # bucket and the project's budget guard. The MLflow database is Neon Postgres,
 # outside GCP; its connection string lives in Secret Manager.
-# State is local (terraform.tfstate, git-ignored).
+# State lives in gs://jd-portfolio-shared-tfstate (versioned), created by hand
+# because Terraform cannot hold the bucket that holds its own state.
 
 terraform {
   required_version = ">= 1.6"
+  backend "gcs" {
+    bucket = "jd-portfolio-shared-tfstate"
+    prefix = "portfolio-infra"
+  }
   required_providers {
     google = {
       source  = "hashicorp/google"

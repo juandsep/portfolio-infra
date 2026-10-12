@@ -22,6 +22,11 @@ Requires `gcloud` and Terraform.
 gcloud auth application-default login
 cd terraform
 cp terraform.tfvars.example terraform.tfvars   # billing account, clients
+# state bucket, once; it also keeps the document-rag-assistant and
+# dynamic-pricing-engine states (one prefix per repository)
+gcloud storage buckets create gs://jd-portfolio-shared-tfstate --project jd-portfolio-shared \
+  --location us-central1 --uniform-bucket-level-access --public-access-prevention
+gcloud storage buckets update gs://jd-portfolio-shared-tfstate --versioning
 terraform init
 terraform apply
 ```
